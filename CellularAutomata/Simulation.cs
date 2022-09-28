@@ -5,6 +5,7 @@ using ObjectTK.Textures;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -16,14 +17,20 @@ namespace CellularAutomata
     public class Simulation
     {
         RenderShader _renderShader;
-        AgentShader _agentShader;
-        FadeShader _fadeShader;
-        Texture2D _texture;
-        Agent[] _agents;
-        Agent[] _agents2;
+        CellularAutomataShader _cellularAutomataShader;
+
+        Texture2D _backBuffer;
+        Texture2D _frontBuffer;
+
         Quad _screen;
 
         Vector2i fadeLocalGroupSize = new Vector2i(10, 10);
+
+        Vector2i _windowSize = new Vector2i();
+        Vector2 _mouseClick = new Vector2();
+        bool _mouseClicked = false;
+
+        object _clickLock = new object();
 
         public Simulation()
         {
@@ -32,42 +39,55 @@ namespace CellularAutomata
 
         public void Load()
         {
-            _texture = new Texture2D(SizedInternalFormat.Rgba8, 1000, 1000);
-            _texture.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Nearest);
-            _texture.Bind(TextureUnit.Texture0);
+            _backBuffer = new Texture2D(SizedInternalFormat.Rgba8, 1000, 1000);
+            _backBuffer.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Nearest);
+            _backBuffer.Bind(TextureUnit.Texture0);
 
-            _agents = Agent.Create(100, new Vector2(_texture.Width / 2, _texture.Height / 2), 10);
-            _agents2 = Agent.Create(100, new Vector2(_texture.Width / 4, _texture.Height / 2), 100);
-            _agentShader = AgentShader.Create(_agents, _agents2, _texture);
-
-            _fadeShader = FadeShader.Create(fadeLocalGroupSize, _texture);
+            /*_frontBuffer = new Texture2D(SizedInternalFormat.Rgba8, 1000, 1000);
+            _frontBuffer.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Nearest);
+            _frontBuffer.Bind(TextureUnit.Texture1);*/
 
             _renderShader = RenderShader.Create();
 
             _screen = new Quad(_renderShader);
+
+            _cellularAutomataShader = CellularAutomataShader.Create(_backBuffer);
         }
 
         public void Render()
         {
-            _agentShader.Use();
-            AgentShader.Dispatch(1);
-
+            _cellularAutomataShader.Use();
+            if(System.Threading.Monitor.TryEnter(_clickLock))
+            {
+                if (_mouseClicked)
+                {
+                    _cellularAutomataShader.ClickLocation.Set(_mouseClick);
+                    _mouseClicked = false;
+                }
+                System.Threading.Monitor.Exit(_clickLock);
+            }
+            CellularAutomataShader.Dispatch(100, 100, 1);
 
             _renderShader.Use();
             _screen.Draw();
 
-            _fadeShader.Use();
-            FadeShader.Dispatch(_texture.Width / fadeLocalGroupSize.X, _texture.Height / fadeLocalGroupSize.Y, 1);
         }
 
-        public void Update()
+        public void Update(MouseState mouseState)
         {
-
+            if (mouseState.IsButtonDown(MouseButton.Left) && System.Threading.Monitor.TryEnter(_clickLock))
+            {
+                _mouseClick = new Vector2((mouseState.X / _windowSize.X) * _backBuffer.Width, (mouseState.Y / _windowSize.Y) * _backBuffer.Height);
+                _mouseClick.Y = _backBuffer.Height - _mouseClick.Y;
+                _mouseClicked = true;
+                System.Threading.Monitor.Exit(_clickLock);
+            }
         }
 
         public void Resize(int newWidth, int newHeight)
         {
             GL.Viewport(0, 0, newWidth, newHeight);
+            _windowSize = new Vector2i(newWidth, newHeight);
         }
     }
 }

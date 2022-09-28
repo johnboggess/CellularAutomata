@@ -9,10 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Data\Shaders\AgentShader.glsl">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Data\Shaders\FadeShader.glsl">
+    <None Update="Data\Shaders\CellularAutomataShader.glsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Data\Shaders\RenderShader.glsl">

@@ -31,7 +31,7 @@ namespace CellularAutomataSandbox
 
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
-            _simulation.Update();
+            _simulation.Update(MouseState);
         }
 
         protected override void OnResize(ResizeEventArgs e)
