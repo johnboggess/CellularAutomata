@@ -12,4 +12,5 @@ void main()
 
 	vec4 front = imageLoad(FrontBuffer, ivec2(gl_GlobalInvocationID.xy));
 	imageStore(BackBuffer, ivec2(gl_GlobalInvocationID.xy), front);
+	imageStore(FrontBuffer, ivec2(gl_GlobalInvocationID.xy), vec4(0));
 }
