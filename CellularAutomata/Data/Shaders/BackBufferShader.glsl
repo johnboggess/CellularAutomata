@@ -11,6 +11,5 @@ void main()
 	vec2 id = vec2(float(gl_GlobalInvocationID.x), float(gl_GlobalInvocationID.y));
 
 	vec4 front = imageLoad(FrontBuffer, ivec2(gl_GlobalInvocationID.xy));
-	front = clamp(front, 0.,.25);
 	imageStore(BackBuffer, ivec2(gl_GlobalInvocationID.xy), front);
 }
