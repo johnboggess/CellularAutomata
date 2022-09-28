@@ -16,14 +16,17 @@ namespace CellularAutomata.Shaders
     [ComputeShaderSource("CellularAutomataShader.CellularAutomata")]
     public class CellularAutomataShader : ComputeProgram
     {
-        public ImageUniform Texture { get; set; }
+        public ImageUniform FrontBuffer { get; set; }
+        public ImageUniform BackBuffer { get; set; }
         public Uniform<Vector2> ClickLocation { get; set; }
 
-        public static CellularAutomataShader Create(Texture2D texture)
+        public static CellularAutomataShader Create(Texture2D frontBuffer, Texture2D backBuffer)
         {
             CellularAutomataShader cellularAutomataShader = ProgramFactory.Create<CellularAutomataShader>();
             cellularAutomataShader.Use();
-            cellularAutomataShader.Texture.Bind(0, texture, TextureAccess.ReadWrite);
+
+            cellularAutomataShader.FrontBuffer.Bind(0, frontBuffer, TextureAccess.ReadWrite);
+            cellularAutomataShader.BackBuffer.Bind(1, backBuffer, TextureAccess.ReadWrite);
 
             return cellularAutomataShader;
         }

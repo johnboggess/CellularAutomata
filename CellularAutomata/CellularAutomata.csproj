@@ -9,6 +9,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Data\Shaders\BackBufferShader.glsl">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Data\Shaders\CellularAutomataShader.glsl">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

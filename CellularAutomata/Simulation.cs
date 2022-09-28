@@ -18,13 +18,12 @@ namespace CellularAutomata
     {
         RenderShader _renderShader;
         CellularAutomataShader _cellularAutomataShader;
+        BackBufferShader _backBufferShader;
 
-        Texture2D _backBuffer;
         Texture2D _frontBuffer;
+        Texture2D _backBuffer;
 
         Quad _screen;
-
-        Vector2i fadeLocalGroupSize = new Vector2i(10, 10);
 
         Vector2i _windowSize = new Vector2i();
         Vector2 _mouseClick = new Vector2();
@@ -39,23 +38,26 @@ namespace CellularAutomata
 
         public void Load()
         {
+            _frontBuffer = new Texture2D(SizedInternalFormat.Rgba8, 1000, 1000);
+            _frontBuffer.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Nearest);
+            _frontBuffer.Bind(TextureUnit.Texture0);
+
             _backBuffer = new Texture2D(SizedInternalFormat.Rgba8, 1000, 1000);
             _backBuffer.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Nearest);
-            _backBuffer.Bind(TextureUnit.Texture0);
-
-            /*_frontBuffer = new Texture2D(SizedInternalFormat.Rgba8, 1000, 1000);
-            _frontBuffer.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Nearest);
-            _frontBuffer.Bind(TextureUnit.Texture1);*/
+            _backBuffer.Bind(TextureUnit.Texture1);
 
             _renderShader = RenderShader.Create();
 
             _screen = new Quad(_renderShader);
 
-            _cellularAutomataShader = CellularAutomataShader.Create(_backBuffer);
+            _cellularAutomataShader = CellularAutomataShader.Create(_frontBuffer, _backBuffer);
+            _backBufferShader = BackBufferShader.Create(_frontBuffer, _backBuffer);
         }
 
         public void Render()
         {
+            _frontBuffer.Bind(TextureUnit.Texture0);
+            _backBuffer.Bind(TextureUnit.Texture1);
             _cellularAutomataShader.Use();
             if(System.Threading.Monitor.TryEnter(_clickLock))
             {
@@ -71,14 +73,16 @@ namespace CellularAutomata
             _renderShader.Use();
             _screen.Draw();
 
+            _backBufferShader.Use();
+            BackBufferShader.Dispatch(100, 100, 1);
         }
 
         public void Update(MouseState mouseState)
         {
             if (mouseState.IsButtonDown(MouseButton.Left) && System.Threading.Monitor.TryEnter(_clickLock))
             {
-                _mouseClick = new Vector2((mouseState.X / _windowSize.X) * _backBuffer.Width, (mouseState.Y / _windowSize.Y) * _backBuffer.Height);
-                _mouseClick.Y = _backBuffer.Height - _mouseClick.Y;
+                _mouseClick = new Vector2((mouseState.X / _windowSize.X) * _frontBuffer.Width, (mouseState.Y / _windowSize.Y) * _frontBuffer.Height);
+                _mouseClick.Y = _frontBuffer.Height - _mouseClick.Y;
                 _mouseClicked = true;
                 System.Threading.Monitor.Exit(_clickLock);
             }
